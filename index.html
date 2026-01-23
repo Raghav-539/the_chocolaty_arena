@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chocolaty Arena</title>
+    <link rel="icon" type="image/x-icon" href="assets/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        
+        /* 1. HIDE SCROLLBARS BUT KEEP FUNCTIONALITY */
+        * {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+            scroll-behavior: smooth;
+        }
+
+        *::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* CLASS TO SHOW SCROLLBARS ON SPECIFIC ELEMENTS */
+        .show-scrollbar {
+            scrollbar-width: auto !important; /* Firefox */
+            -ms-overflow-style: auto !important; /* IE/Edge */
+        }
+
+        .show-scrollbar::-webkit-scrollbar {
+            display: block !important; /* Chrome, Safari, Opera */
+            width: 5px; /* Set a default width */
+            height: 8px;
+        }
+
+        /* Optional: Style the scrollbar to make it look modern */
+        .show-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .show-scrollbar::-webkit-scrollbar-thumb {
+            background: #efcfb7; /* Tailwind gray-300 */
+            border-radius: 10px;
+        }
+
+        .show-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* Tailwind gray-400 */
+        }
+        
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #fdfaf7; 
+            overflow-x: hidden; 
+        }
+
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); }
+        
+        /* Drawer Transitions */
+        .drawer { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .drawer-hide-right { transform: translateX(100%); }
+        .drawer-hide-left { transform: translateX(-100%); }
+        
+        /* Product Entry Animation */
+        .product-card {
+            animation: slideUp 0.6s ease forwards;
+            opacity: 0;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast-item { 
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+        @keyframes toastIn {
+            from { transform: translateY(100%) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Css start for Functions for Privacy policy and Terms of service */
+        /* Clean, thin scrollbar for the modal body */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f5f5f4; /* stone-100 */
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d6d3d1; /* stone-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #78716c; /* stone-500 */
+        }
+
+        /* Styling for the content inside the modal */
+        #modalBody p { margin-bottom: 1.25rem; line-height: 1.6; text-align: justify; }
+        #modalBody h4 { color: #1c1917; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; }
+        /* end for Functions for Privacy policy and Terms of service */
+
+    </style>
+</head>
+<body>
+
+    <!-- <div id="toast-container" class="fixed bottom-10 right-10 z-[300] space-y-3"></div> -->
+     <div id="toast-container" class="fixed bottom-10 left-1/2 -translate-x-1/2 md:left-auto md:right-10 md:translate-x-0 z-[300] space-y-3 w-max max-w-[90vw]"></div>
+
+    <header class="sticky top-0 z-50 glass border-b border-orange-100 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <button class="md:hidden text-2xl" onclick="toggleDrawer('mobile-menu')"><i class="fa-solid fa-bars-staggered"></i></button>
+            <h1 class="text-xl md:text-2xl font-black text-amber-900 tracking-tighter uppercase">The Chocolaty Arena</h1>
+        </div>
+
+        <div class="hidden md:flex flex-1 max-w-xl mx-12 relative items-center">
+            <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search flavor..." class="w-full bg-white border border-stone-200 rounded-2xl px-6 py-3 outline-none focus:ring-4 ring-amber-50 transition-all">
+            <i onclick="resetSearch()" id="searchReset" class="fa-solid fa-circle-xmark absolute right-4 text-stone-300 cursor-pointer hover:text-red-500 hidden"></i>
+        </div>
+
+        <div class="flex gap-6 items-center">
+            <div class="relative cursor-pointer group" onclick="toggleDrawer('wishlist-drawer')">
+                <i class="fa-regular fa-heart text-2xl group-hover:text-red-500 transition-colors"></i>
+                <span id="wish-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
+            </div>
+
+            <div id="cart-icon-trigger"  class="relative cursor-pointer group" onclick="toggleDrawer('cart-drawer')">
+                <i class="fa-solid fa-bag-shopping text-2xl group-hover:text-amber-800 transition-colors"></i>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-amber-800 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1500px] mx-auto p-4 md:p-10">
+        <!-- mobile search btn -->
+        <div class="flex flex-1 w-full relative items-center md:hidden mb-6"> <input type="text" id="searchInputMobile" oninput="handleSearch(true)" placeholder="Search flavor..." class="w-full bg-white border border-stone-200 rounded-2xl px-6 py-3 outline-none focus:ring-4 ring-amber-50 transition-all">
+            <i onclick="resetSearch()" id="searchResetMobile" class="fa-solid fa-circle-xmark absolute right-4 text-stone-300 cursor-pointer hover:text-red-500 hidden"></i>
+        </div>
+
+
+        <section class="hidden md:block relative h-[450px] mx-auto rounded-[40px] overflow-hidden mb-12 shadow-2xl bg-stone-200 w-4/6">
+            <div id="carousel-track" class="h-full w-full relative "></div>
+            <button onclick="moveSlide(-1)" class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-white transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+            <button onclick="moveSlide(1)" class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-white transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+            <div id="carousel-indicators" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3"></div>
+        </section>
+
+       <div class="flex flex-col md:flex-row gap-12 max-w-7xl mx-auto px-4">
+            <aside class="hidden md:block w-64 shrink-0">
+                <div class="sticky top-24 show-scrollbar h-[calc(100vh-8rem)] overflow-y-auto pr-4 space-y-12 ">
+                    <div>
+                        <h3 class="text-xs font-black uppercase text-amber-900 mb-6 tracking-widest">Categories</h3>
+                        <div id="cat-filters" class="space-y-3">
+                            </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-black uppercase text-amber-900 mb-6 tracking-widest">Flavours</h3>
+                        <div id="flav-filters" class="space-y-3">
+                            </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-black uppercase text-amber-900 mb-6 tracking-widest">Price Range</h3>
+                        <div id="price-filters" class="space-y-3">
+                            </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section id="product-grid" class="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-8 items-start content-start">
+                </section>
+        </div>
+    </main>
+
+    <div id="cart-drawer" class="fixed inset-0 z-[150] drawer drawer-hide-right">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleDrawer('cart-drawer')"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-8 flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-2xl font-black italic">Bag</h2>
+                <i onclick="toggleDrawer('cart-drawer')" class="fa-solid fa-xmark text-2xl cursor-pointer"></i>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto pr-2"></div>
+            <div id="cart-checkout" class="pt-6 border-t mt-6"></div>
+        </div>
+    </div>
+
+    <div id="wishlist-drawer" class="fixed inset-0 z-[150] drawer drawer-hide-right">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleDrawer('wishlist-drawer')"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white p-8 flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-2xl font-black italic">Wishlist</h2>
+                <i onclick="toggleDrawer('wishlist-drawer')" class="fa-solid fa-xmark text-2xl cursor-pointer"></i>
+            </div>
+            <div id="wishlist-items" class="flex-1 overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[150] drawer drawer-hide-left">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleDrawer('mobile-menu')"></div>
+        <div class="absolute left-0 top-0 h-full w-80 bg-white p-8 overflow-y-auto">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-xl font-black">Filters</h2>
+                <i onclick="toggleDrawer('mobile-menu')" class="fa-solid fa-xmark text-2xl cursor-pointer"></i>
+            </div>
+            <div id="mobile-filters-content" class="space-y-10"></div>
+        </div>
+    </div>
+
+<div id="product-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeModal()"></div>
+    
+    <div class="relative bg-white max-h-[85vh] md:max-h-[80vh] w-full max-w-4xl rounded-[40px] overflow-hidden flex flex-col md:flex-row shadow-2xl scale-in">
+        
+        <i onclick="closeModal()" class="fa-solid fa-xmark absolute top-6 right-6 z-10 text-2xl cursor-pointer hover:rotate-90 transition-transform"></i>
+        
+        <div class="w-full md:w-1/2 h-48 md:h-auto shrink-0">
+            <img id="m-img" src="" class="w-full h-full object-cover">
+        </div>
+
+        <div class="w-full md:w-1/2 flex flex-col bg-white overflow-hidden">
+            
+            <div class="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                <span id="m-cat" class="text-[10px] font-black tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full w-max uppercase"></span>
+                <h2 id="m-name" class="text-3xl font-black my-4 text-stone-800 leading-tight"></h2>
+                <p id="m-price" class="text-2xl font-bold mb-4 text-amber-900"></p>
+                <p id="m-desc" class="text-stone-500 mb-6 text-sm leading-relaxed"></p>
+                
+                <p class="text-[10px] font-black text-stone-400 mb-2 uppercase">Ingredients</p>
+                <p id="m-ing" class="text-stone-500 italic mb-8 text-xs"></p>
+                
+                <p class="text-[10px] font-black text-stone-400 mb-2 uppercase">Net Weight</p>
+                <p id="m-nwt" class="text-stone-500 italic mb-8 text-xs"></p>
+            </div>
+
+            <div class="p-6 md:p-10 pt-4 border-t border-stone-100 bg-white">
+                <div class="flex gap-4">
+                    <button id="m-add-btn" class="flex-1 bg-amber-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-95">Add to Bag</button>
+                    <button id="m-wish-btn" class="w-14 h-14 border border-stone-100 rounded-2xl flex items-center justify-center hover:bg-stone-50 transition-all"></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    <!-- Back to button -->
+    <button id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-8 right-8 z-[100] flex items-center gap-3 bg-white/80 backdrop-blur-md border border-amber-100 p-2 pl-5 rounded-full shadow-2xl text-amber-900 font-black text-xs uppercase tracking-tighter transition-all duration-500 opacity-0 translate-y-10 pointer-events-none group">
+        <span class="hidden md:inline">Back to Top</span>
+        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-900 text-white flex items-center justify-center group-hover:-translate-y-1 transition-transform shadow-lg">
+            <i class="fa-solid fa-arrow-up"></i>
+        </div>
+    </button>
+
+    <footer class="bg-white border-t border-stone-100 mt-20">
+        <div class="max-w-[1500px] mx-auto px-6 md:px-10 py-16">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                
+                <div class="col-span-1 md:col-span-1">
+                    <h2 class="text-xl font-black text-amber-900 uppercase tracking-tighter mb-6">The Chocolaty Arena</h2>
+                    <p class="text-stone-500 text-sm leading-relaxed mb-6">
+                        Where Every Bite Unleashes Pure Bliss
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="https://www.instagram.com/the_chocolaty_arena" target="_blank" class="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center text-amber-900 hover:bg-amber-900 hover:text-white transition-all duration-300"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center text-amber-900 hover:bg-amber-900 hover:text-white transition-all duration-300"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center text-amber-900 hover:bg-amber-900 hover:text-white transition-all duration-300"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-black text-stone-800 uppercase text-xs tracking-widest mb-6">Shop</h4>
+                    <ul class="space-y-4 text-stone-500 text-sm font-semibold">
+                        <li><a href="#" onclick="setFilter('cat', 'boxes')" class="hover:text-amber-900 transition-colors">Gift Boxes</a></li>
+                        <li><a href="#" onclick="setFilter('cat', 'bars')" class="hover:text-amber-900 transition-colors">Luxury Bars</a></li>
+                        <li><a href="#" onclick="setFilter('cat', 'jars')" class="hover:text-amber-900 transition-colors">Chocolate Jars</a></li>
+                        <li><a href="#" class="hover:text-amber-900 transition-colors">Seasonal Specials</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-black text-stone-800 uppercase text-xs tracking-widest mb-6">Experience</h4>
+                    <ul class="space-y-4 text-stone-500 text-sm font-semibold">
+                        <li><a href="https://forms.gle/RwK3wMMYqeYJTBFu5" target="_blank" class="hover:text-amber-900 transition-colors">Rate Us</a></li>
+                        <li><a href="#" class="hover:text-amber-900 transition-colors">Store Locator</a></li>
+                        <li><button onclick="openModalBtn('privacy')" class="hover:text-amber-900 transition-colors">Privacy Policy</button></li>
+                        <li><button onclick="openModalBtn('terms')" class="hover:text-amber-900 transition-colors">Terms of Service</button></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="border-t border-stone-100 mt-16 pt-8 flex flex-col items-center justify-center text-center">
+                <p class="text-stone-400 text-xs font-bold uppercase tracking-widest italic">
+                    © 2026 The Chocolaty Arena. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- section privacy policy and terms of service buttons -->
+    <section>
+        <div id="modalOverlay" class="fixed inset-0 z-50 hidden flex items-end md:items-center justify-center transition-opacity duration-300 opacity-0 bg-stone-900/60 backdrop-blur-md">
+                
+            <div id="modalCard" 
+                class="bg-white w-full md:max-w-2xl h-[85vh] md:h-auto md:max-h-[85vh] 
+                        rounded-t-[2rem] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden 
+                        transform translate-y-full md:translate-y-0 md:scale-95 transition-transform duration-300 border-t md:border border-stone-100">
+                
+                <div class="flex justify-center py-3 md:hidden">
+                    <div class="w-12 h-1.5 bg-stone-200 rounded-full"></div>
+                </div>
+
+                <div class="hidden md:block h-1.5 w-full bg-gradient-to-r from-amber-700 via-stone-800 to-amber-900"></div>
+
+                <div class="px-6 md:px-8 py-4 md:py-6 border-b border-stone-50 flex justify-between items-center">
+                    <div>
+                        <h3 id="modalTitle" class="text-lg md:text-xl font-black text-stone-900 uppercase tracking-widest">Title</h3>
+                        <p class="hidden md:block text-[10px] text-stone-400 uppercase tracking-tighter mt-1 italic">Legal Documentation</p>
+                    </div>
+                    <button onclick="closeModalBtn()" class="p-2 bg-stone-100 md:bg-transparent rounded-full md:rounded-none group transition-all">
+                        <svg class="w-5 h-5 text-stone-500 group-hover:text-amber-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="modalBody" class="px-6 md:px-8 py-6 md:py-8 overflow-y-auto text-stone-600 custom-scrollbar text-base md:text-sm"></div>
+
+                <div class="px-6 md:px-8 py-5 bg-stone-50 border-t border-stone-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <p class="text-[10px] text-stone-400 text-center md:text-left">By clicking acknowledge, you agree to our policies.</p>
+                    <button onclick="closeModalBtn()" 
+                        class="w-full md:w-auto bg-stone-900 text-white px-10 py-4 md:py-2.5 rounded-xl md:rounded-full font-bold text-xs uppercase tracking-widest hover:bg-amber-900 transition-all">
+                        Acknowledge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- DATA ---
+        const PRODUCTS = [
+            { id: 1, name: "Roasted Dry Fruit Bar", category: "bars", flavor: "dark", price: 80, img: "assets/almond_bars.png", desc: "A crunchy blend of premium roasted nuts embedded in rich dark chocolate.", ingredients: "Roasted Almonds, Cashews, 60% Dark Cocoa, Sugar", net_weight: "80gm (approx)" },
+            { id: 2, name: "Paan Bites", category: "bites", flavor: "paan", price: 18, img: "assets/paan_bites.png", desc: "Bite-sized delights featuring the traditional cooling flavors of Indian Paan.", ingredients: "Betel Leaves, Gulkand, Fennel Seeds, Dark Cocoa", net_weight: "15gm (approx/pc)" },
+            { id: 3, name: "Mixed Choco Box", category: "boxes", flavor: "mixed", price: 50, img: "assets/assorted_box_2.png", desc: "A mini-sampler featuring a fusion of rose, pista, and dark chocolate.", ingredients: "Assorted Cocoa Solids, Milk Solids, Natural Extracts", net_weight: "50gm (approx)" },
+            { id: 4, name: "Pista Crunch Jar", category: "jars", flavor: "pista", price: 180, img: "assets/pista_jar.png", desc: "Handpicked pistachios coated in silky milk chocolate for a salty-sweet crunch.", ingredients: "Pistachios, Milk Chocolate, Vanilla", net_weight: "250gm (approx)" },
+            { id: 5, name: "Dry Fruit Rose Bar", category: "bars", flavor: "rose", price: 80, img: "assets/rose_bars.png", desc: "Elegant milk chocolate infused with rose petals and crunchy dry fruits.", ingredients: "Dried Rose Petals, Mixed Nuts, Milk Chocolate", net_weight: "80gm (approx)" },
+            { id: 6, name: "Butterscotch Bites", category: "bites", flavor: "butterscotch", price: 18, img: "assets/butterscotch_bites.png", desc: "Sweet, buttery crunch pieces wrapped in smooth chocolate layers.", ingredients: "Butterscotch Crumbles, Sugar, Cocoa Butter, Milk Solids", net_weight: "15gm (approx/pc)" },
+            { id: 7, name: "Paan Bar", category: "bars", flavor: "paan", price: 80, img: "assets/paan_bars.png", desc: "The refreshing taste of Meetha Paan captured in a convenient chocolate bar.", ingredients: "Betel Leaf Extract, Gulkand, 60% Dark Cocoa", net_weight: "80gm (approx)" },
+            { id: 8, name: "Rose Jar", category: "jars", flavor: "rose", price: 180, img: "assets/rose_jar.png", desc: "Velvety chocolate-coated treats with a delicate floral rose aroma.", ingredients: "Organic Rose Extract, Milk Chocolate, Cocoa Butter", net_weight: "250gm (approx)" },
+            { id: 9, name: "Paan Gulkand Bites", category: "bites", flavor: "paan", price: 18, img: "assets/gulkand_bites.png", desc: "Traditional Gulkand (rose jam) stuffed inside rich dark chocolate bites.", ingredients: "Cocoa Solids, Gulkand, Paan Flavor Essence, Sugar", net_weight: "15gm (approx/pc)" },
+            { id: 10, name: "Crunchy Butterscotch", category: "jars", flavor: "butterscotch", price: 180, img: "assets/butterscotch_jar.png", desc: "A jar full of golden butterscotch nuggets coated in premium chocolate.", ingredients: "Butterscotch Chips, Milk Chocolate, Vanilla", net_weight: "250gm (approx)" },
+            { id: 11, name: "Ultimate Chocolate Medley", category: "boxes", flavor: "mixed", price: 320, img: "assets/assorted_box_3.png", desc: "Our premium gift box containing a variety of 5 exotic flavored chocolates.", ingredients: "Assorted Cocoa, Nuts, Rose, and Fruit Extracts", net_weight: "350gm (approx)" },
+            { id: 12, name: "Oreo Chocolate Bar", category: "bars", flavor: "oreo", price: 80, img: "assets/oreo_bars.png", desc: "The classic cookie-and-cream combo: crunchy Oreo bits in creamy chocolate.", ingredients: "Oreo Cookie Bits, Milk Chocolate, Vanilla", net_weight: "80gm (approx)" },
+            { id: 13, name: "Strawberry Bites", category: "bites", flavor: "strawberry", price: 18, img: "assets/strawberry_bites.png", desc: "Sweet and tangy strawberry centers covered in decadent dark chocolate.", ingredients: "Strawberry Extract, Cocoa Solids, Cocoa Butter", net_weight: "15gm (approx/pc)" },
+            { id: 14, name: "Refreshing Paan Jar", category: "jars", flavor: "paan", price: 180, img: "assets/paan_jar.png", desc: "Perfect for after-meal snacking: Paan-flavored chocolate pearls in a reusable jar.", ingredients: "Paan Essence, Cocoa Solids, Sugar, Milk Solids", net_weight: "250gm (approx)" },
+            { id: 15, name: "Assorted Chocolate Box", category: "boxes", flavor: "mixed", price: 280, img: "assets/assorted_box_1.png", desc: "A curated collection of 15-20 exotic handmade chocolate pieces.", ingredients: "Dark, Milk, and White Chocolate, Fruit & Nut Fillings", net_weight: "250gm (approx)" },
+            { id: 16, name: "Strawberry Jar", category: "jars", flavor: "strawberry", price: 180, img: "assets/strawberry_jar.png", desc: "Crispy chocolate treats infused with the summery taste of fresh strawberries.", ingredients: "Strawberry Solids, Milk Chocolate, Cocoa Butter", net_weight: "250gm (approx)" },
+            { id: 17, name: "Pista Bites", category: "bites", flavor: "pista", price: 18, img: "assets/pista_bites.png", desc: "Nutty pistachio centers wrapped in a layer of rich, dark cocoa.", ingredients: "Pistachios, Cocoa Solids, Sugar", net_weight: "15gm (approx/pc)" },
+            { id: 18, name: "Rose Petal Bites", category: "bites", flavor: "rose", price: 18, img: "assets/rose_bites.png", desc: "Exquisite chocolate bites topped with real dried organic rose petals.", ingredients: "85% Cocoa, Organic Rose Petals, Sea Salt", net_weight: "15gm (approx/pc)" }
+        ];
+
+        const SLIDES = [
+            "assets/assorted_bars_banner.png",
+            "assets/assorted_bites_banner.png", 
+            "assets/assorted_jars_banner.png",
+            "assets/assorted_bowls_banner.png"
+        ];
+
+        function getCartControls(p) {
+            // Look for this item in the cart array
+            const cartItem = cart.find(item => item.id === p.id);
+
+            if (cartItem) {
+                // If it's in the cart, show the +/- counter
+               return `
+                    <div class="flex items-center justify-between bg-amber-900 text-white h-[42px] lg:h-[56px] rounded-xl lg:rounded-2xl overflow-hidden shadow-lg border border-white/10">
+                        <button onclick="event.stopPropagation(); changeQty(${p.id}, -1)" 
+                            class="flex-1 h-full hover:bg-black/20 transition-colors font-bold text-md">-</button>
+                        
+                        <div class="w-[1.5px] h-4 lg:h-6 bg-white/30"></div>
+                        
+                        <span class="px-3 lg:px-6 font-black text-xs lg:text-base min-w-[30px] text-center">
+                            ${cartItem.qty}
+                        </span>
+                        
+                        <div class="w-[1.5px] h-4 lg:h-6 bg-white/30"></div>
+                        
+                        <button onclick="event.stopPropagation(); changeQty(${p.id}, 1)" 
+                            class="flex-1 h-full hover:bg-black/20 transition-colors font-bold text-md">+</button>
+                    </div>
+                `;
+            } else {
+                // If it's NOT in the cart, show the "Add to Bag" button
+                return `
+                    <button onclick="event.stopPropagation(); addToCart(${p.id})" 
+                        class="w-full bg-amber-900 text-white py-2.5 lg:py-4 rounded-xl lg:rounded-2xl text-[10px] lg:text-base font-bold hover:bg-black active:scale-95 transition-all shadow-md">
+                        Add <span class="hidden lg:inline">to Bag</span>
+                    </button>
+                `;
+            }
+        }
+
+        // --- STATE ---
+        let cart = [];
+        let wishlist = [];
+        let filters = { cat: 'All', flav: 'All', price: 'All' };
+        let searchQuery = "";
+        let currentSlide = 0;
+
+        // --- PRODUCT RENDERING ---
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            const filtered = PRODUCTS.filter(p => {
+                const s = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+                const c = filters.cat === 'All' || p.category === filters.cat;
+                const f = filters.flav === 'All' || p.flavor === filters.flav;
+                let pr = true;
+                if(filters.price !== 'All') {
+                    const [min, max] = filters.price.split('-').map(Number);
+                    pr = p.price >= min && p.price <= max;
+                }
+                return s && c && f && pr;
+            });
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center"><img src="assets/no_search_found.png" class="w-48 mx-auto opacity-30"><p class="text-stone-400 mt-6 font-bold">No treats found matching your search.</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                const isInWish = wishlist.some(item => item.id === p.id);
+                const wishIconClass = isInWish ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart text-stone-600';
+
+                return `
+                    <div class="product-card group bg-white rounded-[24px] lg:rounded-[40px] p-3 lg:p-4 border border-stone-50 hover:shadow-2xl transition-all duration-500 flex flex-col justify-between">
+                        <div>
+                            <div class="relative rounded-[20px] lg:rounded-[30px] overflow-hidden aspect-square mb-3 lg:mb-6">
+                                <img id="img-${p.id}" src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                <button onclick="toggleWish(${p.id})" class="absolute top-2 right-2 lg:top-4 lg:right-4 w-8 h-8 lg:w-11 lg:h-11 glass rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm">
+                                    <i class="${wishIconClass} text-sm lg:text-lg"></i>
+                                </button>
+                            </div>
+                            
+                            <h4 class="text-sm lg:text-xl font-bold text-stone-800 line-clamp-1">${p.name}</h4>
+                            <p class="text-amber-900 font-black text-lg lg:text-2xl mt-0 lg:mt-1">₹${p.price}</p>
+                        </div>
+
+                        <div class="flex gap-2 lg:gap-3 mt-4 lg:mt-6">
+                            <div id="btn-container-${p.id}" class="flex-1">
+                                ${getCartControls(p)}
+                            </div>
+                            <button onclick="openModal(${p.id})" class="w-9 h-9 lg:w-14 lg:h-14 border border-stone-100 rounded-xl lg:rounded-2xl flex items-center justify-center hover:bg-stone-50 transition-all flex-shrink-0">
+                                <i class="fa-solid fa-eye text-stone-400 text-xs lg:text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- FILTER LOGIC (WITH TOGGLE) ---
+        function renderFilters() {
+            const cats = ['All', 'boxes', 'jars', 'bars', 'bites'];
+            const flavs = ['All', 'paan', 'rose', 'pista', 'dark', 'elaichi', 'butterscotch', 'oreo', 'strawberry', 'mixed'];
+            const prs = [{l:'All', v:'All'}, {l:'Under ₹100', v:'0-100'}, {l:'₹100-200', v:'100-200'}, {l:'₹200-300', v:'200-300'}, {l:'₹300-400', v:'300-400'}];
+
+            const gen = (list, key) => list.map(i => {
+                const val = i.v || i;
+                const active = filters[key] === val;
+                return `
+                    <div onclick="setFilter('${key}', '${val}')" class="flex items-center gap-3 cursor-pointer group">
+                        <div class="w-6 h-6 border-2 rounded-lg flex items-center justify-center transition-all ${active ? 'bg-amber-900 border-amber-900' : 'border-stone-200 group-hover:border-amber-200'}">
+                            ${active ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
+                        </div>
+                        <span class="capitalize text-sm ${active ? 'text-amber-900 font-bold' : 'text-stone-500 group-hover:text-amber-800'}">${i.l || i}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cat-filters').innerHTML = gen(cats, 'cat');
+            document.getElementById('flav-filters').innerHTML = gen(flavs, 'flav');
+            document.getElementById('price-filters').innerHTML = gen(prs, 'price');
+            document.getElementById('mobile-filters-content').innerHTML = `
+                <div><h3 class="font-black text-xs uppercase mb-6">Category</h3>${gen(cats, 'cat')}</div>
+                <div><h3 class="font-black text-xs uppercase mb-6">Flavours</h3>${gen(flavs, 'flav')}</div>
+                <div><h3 class="font-black text-xs uppercase mb-6">Price Range</h3>${gen(prs, 'price')}</div>
+            `;
+        }
+
+        function setFilter(k, v) { 
+            filters[k] = (filters[k] === v) ? 'All' : v; 
+            renderFilters(); renderProducts(); 
+        }
+
+
+        function addToCart(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            const existing = cart.find(x => x.id === id);
+            
+            if (existing) {
+                existing.qty++;
+                updateUI(id);
+            } else {
+                cart.push({ ...p, qty: 1 });
+                
+                // Start animation first
+                flyToCart(id); 
+                
+                // Small delay so the button update doesn't "break" the animation start
+                setTimeout(() => {
+                    updateUI(id);
+                }, 50); 
+            }
+            showToast(`"${p.name}" added to bag! 🍫`);
+        }
+
+        function toggleWish(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            const index = wishlist.findIndex(x => x.id === id);
+            if(index === -1) {
+                wishlist.push(p);
+                showToast(`Saved to wishlist! ❤️`);
+            } else {
+                wishlist.splice(index, 1);
+                showToast(`Removed from wishlist.`);
+            }
+            updateUI();
+            renderProducts(); // Refresh icons on cards
+        }
+
+        function remCart(id) {
+            const p = cart.find(x => x.id === id);
+            cart = cart.filter(x => x.id !== id);
+            updateUI(); 
+            showToast(`Removed ${p.name} from bag.`);
+        }
+
+        function updateUI(productId = null) {
+            // 1. Update Global Badges
+            const totalQty = cart.reduce((a, b) => a + b.qty, 0);
+            document.getElementById('cart-count').innerText = totalQty;
+            document.getElementById('wish-count').innerText = wishlist.length;
+
+            // 2. Update the Sidebar Cart
+            renderCart();
+            renderWish();
+
+            // 3. Update the specific product button instead of the whole grid
+            if (productId) {
+                const btnContainer = document.getElementById(`btn-container-${productId}`);
+                const product = PRODUCTS.find(p => p.id === productId);
+                if (btnContainer && product) {
+                    btnContainer.innerHTML = getCartControls(product);
+                }
+            } else {
+                // Fallback: If no ID provided, render everything (like on first load)
+                renderProducts();
+            }
+        }
+
+        function showToast(m) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = "toast-item glass text-sm md:text-lg border border-amber-100 px-6 py-4 justify-center rounded-3xl shadow-2xl flex items-center gap-3 text-stone-800 font-bold";
+            t.innerHTML = `<i class="fa-solid fa-bell text-amber-600"></i> ${m}`;
+            container.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
+        }
+
+        // --- CART/WISHLIST RENDER ---
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                container.innerHTML = `<div class="text-center py-20"><img src="assets/cart_empty.png" class="w-32 mx-auto opacity-20"><p class="text-stone-400 mt-4 text-sm font-bold">Your bag is empty</p></div>`;
+                document.getElementById('cart-checkout').innerHTML = "";
+                return;
+            }
+            container.innerHTML = cart.map(i => `
+                <div class="flex gap-4 mb-6 items-center">
+                    <img src="${i.img}" class="w-20 h-20 rounded-2xl object-cover">
+                    <div class="flex-1">
+                        <h5 class="font-bold text-sm text-stone-800">${i.name}</h5>
+                        <div class="flex items-center gap-3 mt-2">
+                            <button onclick="changeQty(${i.id},-1)" class="w-7 h-7 border rounded-lg hover:bg-stone-50">-</button>
+                            <span class="text-xs font-black">${i.qty}</span>
+                            <button onclick="changeQty(${i.id},1)" class="w-7 h-7 border rounded-lg hover:bg-stone-50">+</button>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-amber-900 text-sm mb-2">₹${i.price * i.qty}</p>
+                        <i onclick="remCart(${i.id})" class="fa-solid fa-trash-can text-red-400 cursor-pointer hover:text-red-600 transition-colors"></i>
+                    </div>
+                </div>
+
+                
+            `).join('');
+
+            const total = cart.reduce((a,b)=>a+(b.price*b.qty), 0);
+            document.getElementById('cart-checkout').innerHTML = `
+                <div class="flex justify-between text-xl font-black mb-6"><span>Total</span><span>₹${total}</span></div>
+                <button onclick="placeOrder()" class="w-full bg-black text-white py-5 rounded-[20px] font-bold flex items-center justify-center gap-3 hover:bg-amber-900 transition-all">
+                    <i class="fa-brands fa-instagram"></i> Checkout via Instagram
+                </button>
+            `;
+        }
+
+        function renderWish() {
+            const container = document.getElementById('wishlist-items');
+            if(wishlist.length === 0) {
+                container.innerHTML = `<div class="text-center py-20"><img src="assets/wishlist_empty.png" class="w-32 mx-auto opacity-20"><p class="text-stone-400 mt-4 text-sm font-bold">Wishlist is empty</p></div>`;
+                return;
+            }
+            container.innerHTML = wishlist.map(i => `
+                <div class="flex gap-4 mb-6 items-center">
+                    <img src="${i.img}" class="w-16 h-16 rounded-2xl object-cover">
+                    <div class="flex-1 font-bold text-sm text-stone-800">${i.name}</div>
+                    <button onclick="moveToBag(${i.id})" class="text-[10px] bg-amber-50 text-amber-900 px-3 py-2 rounded-lg font-bold">Move to Bag</button>
+                    <i onclick="toggleWish(${i.id})" class="fa-solid fa-trash-can text-red-400 cursor-pointer"></i>
+                </div>
+            `).join('');
+        }
+
+        function changeQty(id, d) {
+            const i = cart.find(x => x.id === id);
+            if (!i) return;
+
+            i.qty += d;
+            if (i.qty < 1) {
+                cart = cart.filter(x => x.id !== id);
+                updateUI(id); // Refreshes button back to "Add"
+            } else {
+                updateUI(id); // Refreshes the number in the +/- counter
+            }
+        }
+        
+
+        function moveToBag(id) { 
+            addToCart(id); 
+            toggleWish(id); 
+        }
+
+        // --- MODAL & CAROUSEL UTILS ---
+        function toggleDrawer(id) {
+            const drawer = document.getElementById(id);
+            const isMobile = id.includes('mobile');
+            const hideClass = isMobile ? 'drawer-hide-left' : 'drawer-hide-right';
+            
+            // Toggle the drawer
+            drawer.classList.toggle(hideClass);
+            
+            // Check if the drawer is now open (doesn't have the hide class)
+            const isOpen = !drawer.classList.contains(hideClass);
+            
+            if (isOpen) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Only re-enable scroll if the modal isn't also open
+                if (document.getElementById('product-modal').classList.contains('hidden')) {
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        }
+
+        function handleSearch(isMobile = false) { 
+            const desktopInput = document.getElementById('searchInput');
+            const mobileInput = document.getElementById('searchInputMobile');
+            
+            // Get value from whichever input was used
+            searchQuery = isMobile ? mobileInput.value : desktopInput.value; 
+            
+            // Sync both inputs so they show the same text
+            if(isMobile) desktopInput.value = searchQuery;
+            else if(mobileInput) mobileInput.value = searchQuery;
+
+            // Toggle reset buttons
+            const btn = document.getElementById('searchReset');
+            const btnMob = document.getElementById('searchResetMobile');
+            
+            if(searchQuery.length > 0) {
+                btn.classList.remove('hidden');
+                if(btnMob) btnMob.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+                if(btnMob) btnMob.classList.add('hidden');
+            }
+            renderProducts(); 
+        }
+
+        function resetSearch() { 
+            document.getElementById('searchInput').value = ""; 
+            if(document.getElementById('searchInputMobile')) document.getElementById('searchInputMobile').value = "";
+            handleSearch(); 
+        }
+      
+
+        function openModal(id) {
+            const p = PRODUCTS.find(x=>x.id===id);
+            const isInWish = wishlist.some(item => item.id === p.id);
+            document.body.style.overflow = 'hidden'
+            document.getElementById('m-img').src = p.img;
+            document.getElementById('m-name').innerText = p.name;
+            document.getElementById('m-price').innerText = "₹"+p.price;
+            document.getElementById('m-desc').innerText = p.desc;
+            document.getElementById('m-cat').innerText = p.category;
+            document.getElementById('m-ing').innerText = p.ingredients;
+            document.getElementById('m-nwt').innerText = p.net_weight;
+
+            
+            const wBtn = document.getElementById('m-wish-btn');
+            wBtn.innerHTML = isInWish ? '<i class="fa-solid fa-heart text-red-500 text-xl"></i>' : '<i class="fa-regular fa-heart text-stone-600 text-xl"></i>';
+            wBtn.onclick = () => { toggleWish(p.id); closeModal(); };
+            
+            document.getElementById('m-add-btn').onclick = () => { addToCart(p.id); closeModal(); };
+            document.body.classList.add('no-scroll');
+            document.getElementById('product-modal').classList.remove('hidden');
+
+        }
+        
+        function closeModal() {
+            document.body.classList.remove('no-scroll');
+            document.body.style.overflow = 'auto'
+
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function initCarousel() {
+            const track = document.getElementById('carousel-track');
+            track.innerHTML = SLIDES.map((s,i) => `<img src="${s}" id="slide-${i}" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ${i===0?'opacity-100':'opacity-0'}">`).join('');
+            document.getElementById('carousel-indicators').innerHTML = SLIDES.map((_,i) => `<div id="ind-${i}" class="h-1.5 transition-all rounded-full ${i===0?'w-12 bg-white':'w-6 bg-white/40'}"></div>`).join('');
+        }
+
+        function moveSlide(dir) {
+            document.getElementById(`slide-${currentSlide}`).classList.replace('opacity-100', 'opacity-0');
+            document.getElementById(`ind-${currentSlide}`).classList.replace('w-12', 'w-6');
+            document.getElementById(`ind-${currentSlide}`).classList.replace('bg-white', 'bg-white/40');
+            currentSlide = (currentSlide + dir + SLIDES.length) % SLIDES.length;
+            document.getElementById(`slide-${currentSlide}`).classList.replace('opacity-0', 'opacity-100');
+            document.getElementById(`ind-${currentSlide}`).classList.replace('w-6', 'w-12');
+            document.getElementById(`ind-${currentSlide}`).classList.replace('bg-white/40', 'bg-white');
+            
+        }
+
+        function placeOrder() {
+            const now = new Date();
+            const DD = String(now.getDate()).padStart(2, '0');
+            const MM = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const YY = String(now.getFullYear()).slice(-2);
+            const HH = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            
+            const orderId = `${DD}${MM}${YY}${HH}${min}`;
+            const date = new Date().toLocaleString();
+            
+            // Create a structured text block
+            let orderDetails = `🛍️ *NEW ORDER: ${orderId}*\n`;
+            orderDetails += `📅 Date: ${date}\n`;
+            orderDetails += `--------------------------\n`;
+            
+            // Loop through items
+            cart.forEach(item => {
+                orderDetails += `• ${item.name}\n  Qty: ${item.qty} | Price: ₹${item.price * item.qty}\n`;
+            });
+            
+            orderDetails += `--------------------------\n`;
+            orderDetails += `💰 *TOTAL AMOUNT: ₹${cart.reduce((a, b) => a + (b.price * b.qty), 0)}*\n\n`;
+            orderDetails += `📍 Please send your delivery address and contact number below.`;
+
+            // Copy to Clipboard
+            navigator.clipboard.writeText(orderDetails).then(() => {
+                // Show your custom toast
+                showToast("Order Details Copied! Paste in DMs.");
+
+                // Small delay so user sees the toast before tab switches
+                setTimeout(() => {
+                    window.open(`https://ig.me/m/the_chocolaty_arena`, '_blank');
+                }, 1200);
+            }).catch(err => {
+                console.error('Failed to copy', err);
+                window.open(`https://ig.me/m/the_chocolaty_arena`, '_blank');
+            });
+        }
+
+        // Start - Functions for Privacy policy and Terms of service
+        const modalData = {
+            privacy: {
+                title: "Privacy Policy",
+                content: "<p>This Privacy Policy describes how The Chocolaty Arena (the 'Site', 'we', 'us', or 'our') collects, use your information when you make a purchase from the_chocolaty_arena (the 'Site') or otherwise communicate with us regarding the Site (collectively, the 'Services'). For purposes of this Privacy Policy, 'you' and 'your' means you as the user of the Services, whether you are a customer, website visitor, or another individual whose information we have collected pursuant to this Privacy Policy. </p> <p> Please read this Privacy Policy carefully. By using and accessing any of the Services, you agree to the collection, your information as described in this Privacy Policy. If you do not agree to this Privacy Policy, please do not use or access any of the Services. </p> <p> <b> Information We Collect Directly from You </b> </p> <p> <b> Contact details </b> including your name, address, and phone number. </p> <p> <b> Order information </b> including your name, address, payment confirmation, and phone number </p> <p> <b> How We Use Your Personal Information </b> </p> <p> Providing Products and Services. We use your personal information to provide you with the Services in order to fulfill your orders, to send notifications to you related to your purchases, to arrange for shipping. </p>"
+            },
+            terms: {
+                title: "Terms of Service",
+                content: "<p> <b> OVERVIEW </b> </p> <p> This website is operated by The Chocolaty Arena. Throughout the site, the terms “we”, “us” and “our” refer to The Chocolaty Arena. By visiting our site and/ or purchasing something from us, you engage in our “Service” and agree to be bound by the following terms and conditions (“Terms of Service”, “Terms”). These Terms of Service apply to all users of the site, including without limitation users who are browsers, customers. Please read these Terms of Service carefully before accessing or using our website. By accessing or using any part of the site, you agree to be bound by these Terms of Service. </p> <p> <b> PRICES </b> </p> Prices mentioned on the website are inclusive of taxes and no amount above and beyond is to be paid by the customers. The prices mentioned is 'MAXIMUM RETAIL PRICE (MRP) (Inclusive of all taxes)'. <p> <b> Shipping Charges </b> are not included in the MRP. Shipping charges depend on the delivery location and the time at which the order is placed. </p>"
+            }
+        };
+
+        function openModalBtn(type) {
+            const modal = document.getElementById('modalOverlay');
+            const card = document.getElementById('modalCard');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            title.innerText = modalData[type].title;
+            body.innerHTML = modalData[type].content;
+
+            modal.classList.remove('hidden');
+            
+            // Tiny timeout to trigger the transition
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                // Mobile animation (Slide)
+                card.classList.remove('translate-y-full');
+                card.classList.add('translate-y-0');
+                // Desktop animation (Scale)
+                card.classList.remove('md:scale-95');
+                card.classList.add('md:scale-100');
+            }, 10);
+            
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModalBtn() {
+            const modal = document.getElementById('modalOverlay');
+            const card = document.getElementById('modalCard');
+
+            modal.classList.remove('opacity-100');
+            // Reverse animations
+            card.classList.add('translate-y-full');
+            card.classList.remove('md:scale-100');
+            card.classList.add('md:scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+
+        // Close if user clicks outside the white box
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalOverlay');
+            if (event.target == modal) {
+                closeModalBtn();
+            }
+        }
+
+        // End - Functions for Privacy policy and Terms of service
+
+        // fly to cart straight move
+        function flyToCart(productId) {
+            const img = document.getElementById(`img-${productId}`);
+            const cartIcon = document.getElementById('cart-icon-trigger');
+            
+            // Debugging logs to help you find the missing ID
+            if (!img) { 
+                console.warn(`Animation Source Missing: id="img-${productId}"`); 
+                return; 
+            }
+            if (!cartIcon) { 
+                console.warn(`Animation Target Missing: id="cart-icon-trigger"`); 
+                return; 
+            }
+
+            const flyer = img.cloneNode();
+            const rect = img.getBoundingClientRect();
+            const cartRect = cartIcon.getBoundingClientRect();
+
+            Object.assign(flyer.style, {
+                position: 'fixed',
+                top: rect.top + 'px',
+                left: rect.left + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px',
+                zIndex: '9999',
+                // 'ease-in-out' makes the straight move look professional
+                transition: 'all 0.7s ease-in-out', 
+                pointerEvents: 'none',
+                borderRadius: '12px',
+                objectFit: 'cover',
+                opacity: '1'
+            });
+
+            document.body.appendChild(flyer);
+
+            // Use a slight delay to ensure the browser animates from point A to B
+            setTimeout(() => {
+                flyer.style.top = (cartRect.top) + 'px';
+                flyer.style.left = (cartRect.left) + 'px';
+                flyer.style.width = '30px';
+                flyer.style.height = '30px';
+                flyer.style.opacity = '0.2';
+                // transform: rotate is removed here for a straight path
+            }, 10);
+
+            setTimeout(() => {
+                flyer.remove();
+                // Visual confirmation on the bag icon
+                cartIcon.style.transform = 'scale(1.2)';
+                setTimeout(() => cartIcon.style.transform = 'scale(1)', 200);
+            }, 700);
+        }
+
+        // --- BACK TO TOP VISIBILITY ---
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('backToTop');
+            if (window.scrollY > 300) {
+                btn.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+                btn.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+            } else {
+                btn.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+                btn.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+            }
+        });
+
+        window.onload = () => { 
+            initCarousel(); 
+            renderFilters(); 
+            renderProducts(); 
+            updateUI(); 
+            setInterval(() => moveSlide(1), 5000); 
+        };
+
+        
+    </script>
+</body>
+</html>
