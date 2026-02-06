@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = "chocolatyarena/chocolatyarenaapp"
+        IMAGE_NAME = "testinguser1709/chocolatyarenaapp"
         IMAGE_TAG  = "latest"
     }
 
