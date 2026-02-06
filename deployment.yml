@@ -18,7 +18,7 @@ spec:
     spec: 
       containers:
       - name: chocolatyarenaappcontainer
-        image: chocolatyarena/chocolatyarenaapp:v1
+        image: chocolatyarena/chocolatyarenaapp:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
