@@ -1,7 +1,5 @@
-FROM tomcat:10.1-jdk21-temurin
+FROM nginx:alpine
 
-LABEL maintainer="ChocolatyArena <chocolatyarena@oracle.com>"
+COPY target/site /usr/share/nginx/html
 
-EXPOSE 8080
-
-COPY target/chocolaty-arena-app.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 80
