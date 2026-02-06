@@ -12,9 +12,9 @@ spec:
       app: chocolatyarenaapp
   template:
     metadata:
-    name: chocolatyarenaapppod
-    labels:
-      app: chocolatyarenaapp	 
+      labels:
+        app: chocolatyarenaapp	 
+      name: chocolatyarenaapppod
     spec: 
       containers:
       - name: chocolatyarenaappcontainer
