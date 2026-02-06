@@ -7,10 +7,11 @@ pipeline {
 
     environment {
         IMAGE_NAME = "testinguser1709/chocolatyarenaapp"
-        IMAGE_TAG  = "latest"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
     }
 
     stages {
+
         stage('Clone Repo') {
             steps {
                 git branch: 'main',
@@ -26,7 +27,9 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+                sh '''
+                  docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
@@ -45,9 +48,12 @@ pipeline {
             }
         }
 
-        stage('Kubernetes Deployment') {
+        stage('Kubernetes Deploy') {
             steps {
-                sh 'kubectl rollout restart deployment chocolatyarenaappdeployment'
+                sh '''
+                  kubectl set image deployment/chocolatyarenaappdeployment \
+                  chocolatyarenaappcontainer=$IMAGE_NAME:$IMAGE_TAG
+                '''
             }
         }
     }
