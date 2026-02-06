@@ -19,7 +19,10 @@
               <target>
                 <mkdir dir="target/site"/>
                 <copy todir="target/site">
-                  <fileset dir="." includes="**/*.html,**/*.css,**/*.js"/>
+                  <fileset dir=".">
+                    <exclude name="target/**"/>
+                    <exclude name=".git/**"/>
+                  </fileset>
                 </copy>
               </target>
             </configuration>
